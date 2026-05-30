@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  web-portal:
+    build:
+      context: ./apps/web-portal
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - supabase
+    restart: unless-stopped
+
+  supabase:
+    image: supabase/supabase:latest
+    ports:
+      - "5432:5432"
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - supabase_data:/var/lib/postgresql
+    restart: unless-stopped
+
+  mcp-server:
+    build: ./services/mcp-server
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+
+  copilot-app:
+    build: ./services/copilot-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  supabase_data:
+  ollama_data:

@@ -1,0 +1,11 @@
+services:
+  mcp-server:
+    build:
+      context: ./services/mcp-server
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./services/mcp-server:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8001
+    restart: unless-stopped

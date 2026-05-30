@@ -1,0 +1,23 @@
+services/copilot-app:
+  build:
+    context: ./services/copilot-app
+    dockerfile: Dockerfile
+  ports:
+    - "8000:8000"
+  env_file:
+    - .env
+  depends_on:
+    - ollama
+  command: uvicorn main:app --host 0.0.0.0 --port 8000
+  restart: unless-stopped
+
+services/ollama:
+  image: ollama/ollama:latest
+  ports:
+    - "11434:11434"
+  volumes:
+    - ollama_data:/root/.ollama
+  restart: unless-stopped
+
+volumes:
+  ollama_data:

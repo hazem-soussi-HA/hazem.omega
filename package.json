@@ -1,0 +1,28 @@
+{
+  "name": "hazem-soussi-ecosystem",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "npm@10.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "deploy": "turbo run deploy",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^2.1.0",
+    "eslint": "^9.22.0",
+    "eslint-define-config": "^2.1.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.4.2",
+    "turbo": "^2.5.8",
+    "typescript": "^5.8.3"
+  }
+}
