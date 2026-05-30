@@ -24,14 +24,26 @@ export interface User {
   displayName?: string;
 }
 
+export interface Subscription {
+  plan: "starter" | "pro" | "team" | "enterprise";
+  status: "active" | "trialing" | "past_due" | "canceled" | "none";
+  expiresAt?: string;
+  apiCallsUsed: number;
+  aiMessagesUsed: number;
+}
+
 interface AppState {
   isAuthenticated: boolean;
   user: User | null;
   userRole: UserRole;
+  subscription: Subscription;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  setPlan: (plan: Subscription["plan"]) => void;
   isAdmin: () => boolean;
   isOwner: () => boolean;
+  hasProAccess: () => boolean;
+  hasTeamAccess: () => boolean;
 }
 
 function deriveRole(email: string): UserRole {
@@ -46,25 +58,33 @@ function isAdminEmail(email: string): boolean {
   return role === "owner" || role === "admin";
 }
 
+const DEFAULT_SUBSCRIPTION: Subscription = {
+  plan: "starter",
+  status: "none",
+  apiCallsUsed: 0,
+  aiMessagesUsed: 0,
+};
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       isAuthenticated: false,
       user: null,
       userRole: "free",
+      subscription: DEFAULT_SUBSCRIPTION,
 
       login: async (email: string, _password: string) => {
         const normalizedEmail = email.toLowerCase();
 
-        // In production, this calls Supabase Auth or a similar provider
-        // For now, check against whitelist AND require non-empty password
         if (!normalizedEmail || !_password) return false;
 
         const role = deriveRole(normalizedEmail);
 
-        // Admin emails still need password validation
-        // (In production: validate via Supabase/Auth0)
         if (isAdminEmail(normalizedEmail) && _password.length < 1) return false;
+
+        const plan = role === "owner" ? "enterprise" as const
+          : role === "admin" ? "team" as const
+          : "starter" as const;
 
         const user: User = {
           id: crypto.randomUUID ? crypto.randomUUID() : `usr_${Date.now()}`,
@@ -77,6 +97,11 @@ export const useAppStore = create<AppState>()(
           isAuthenticated: true,
           user,
           userRole: role,
+          subscription: {
+            ...DEFAULT_SUBSCRIPTION,
+            plan,
+            status: "active",
+          },
         });
 
         return true;
@@ -87,7 +112,19 @@ export const useAppStore = create<AppState>()(
           isAuthenticated: false,
           user: null,
           userRole: "free",
+          subscription: DEFAULT_SUBSCRIPTION,
         });
+      },
+
+      setPlan: (plan) => {
+        set((state) => ({
+          subscription: {
+            ...state.subscription,
+            plan,
+            status: "active",
+          },
+          userRole: plan === "team" ? "premium" : state.userRole,
+        }));
       },
 
       isAdmin: () => {
@@ -98,6 +135,17 @@ export const useAppStore = create<AppState>()(
       isOwner: () => {
         return get().userRole === "owner";
       },
+
+      hasProAccess: () => {
+        const { userRole, subscription } = get();
+        if (userRole === "owner" || userRole === "admin") return true;
+        return subscription.plan === "pro" || subscription.plan === "team" || subscription.plan === "enterprise";
+      },
+
+      hasTeamAccess: () => {
+        const { subscription } = get();
+        return subscription.plan === "team" || subscription.plan === "enterprise";
+      },
     }),
     {
       name: "hazem-omega-auth",
@@ -105,6 +153,7 @@ export const useAppStore = create<AppState>()(
         isAuthenticated: state.isAuthenticated,
         user: state.user,
         userRole: state.userRole,
+        subscription: state.subscription,
       }),
     }
   )

@@ -104,8 +104,8 @@ export function Input({ className, ...props }: InputProps) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Separator                                                          */
 /* ------------------------------------------------------------------ */
+/*  Separator                                                          */
 export function Separator({ className, orientation = "horizontal", ...props }: { className?: string; orientation?: "horizontal" | "vertical" }) {
   return (
     <div
@@ -116,5 +116,35 @@ export function Separator({ className, orientation = "horizontal", ...props }: {
       )}
       {...props}
     />
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Tabs                                                               */
+interface TabsProps {
+  tabs: { label: string; value: string }[];
+  active: string;
+  onChange: (value: string) => void;
+  className?: string;
+}
+
+export function Tabs({ tabs, active, onChange, className }: TabsProps) {
+  return (
+    <div className={cn("flex gap-1 rounded-lg border border-border p-1 bg-card", className)}>
+      {tabs.map((tab) => (
+        <button
+          key={tab.value}
+          onClick={() => onChange(tab.value)}
+          className={cn(
+            "flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+            active === tab.value
+              ? "bg-accent text-background"
+              : "text-muted hover:text-foreground"
+          )}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
   );
 }
